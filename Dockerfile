@@ -1,21 +1,15 @@
-# Base image for pulling the latest official Node.js image from Docker Hub
-FROM node:latest
-
-# Create directory name inside container '-p' flag ensure that directory is created if it doesn't already exist.
-RUN mkdir -p /app
-
-# Set working directory inside container
-WORKDIR /app
-
-# Copy current local directory to /app which current directory in container
-COPY . .
-
-# Install all dependencies in package.json
+FROM node:8.11.1-alpine as builder
+USER node
+RUN mkdir -p /tmp/app
+WORKDIR /tmp/app
+COPY ./package*.json ./
 RUN npm install
-
-# Used for applications that need to be compiled before run
+COPY --chown=node . .
 RUN npm run build
 
+FROM nginx:1.13.12-alpine
+WORKDIR /var/www/app
+COPY --from=builder /tmp/app/dist/ /var/www/app/
 # Expose the port on which your NextJS application will run (change as per your application)
 EXPOSE 3000
 
